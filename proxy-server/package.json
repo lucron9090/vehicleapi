@@ -1,0 +1,26 @@
+{
+  "name": "motor-m1-proxy-server",
+  "version": "1.0.0",
+  "description": "Authentication proxy server for Motor.com M1 Angular application",
+  "main": "index.js",
+  "engines": {
+    "node": ">=14.x"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "vercel-build": "echo 'No build required'",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["proxy", "authentication", "ebsco", "motor", "express", "vercel"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.12.2",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "lint": "^0.8.19",
+    "uuid": "^13.0.0"
+  }
+}
+
