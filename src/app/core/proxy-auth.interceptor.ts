@@ -8,22 +8,19 @@ import { Observable } from 'rxjs';
  * This interceptor:
  * 1. Intercepts all HTTP requests to the Motor.com M1 API
  * 2. Rewrites the URL to go through the local proxy server (http://localhost:3001)
- * 3. Adds the X-Auth-Token header from EBSCO authentication
+ * 3. The proxy server handles authentication automatically server-side
  * 
  * Usage:
  * 1. Start the proxy server: cd proxy-server && npm start
- * 2. Authenticate via EBSCO: POST http://localhost:3001/api/auth/ebsco
- *    with { cardNumber: "...", password: "..." }
- * 3. Store the returned authToken in localStorage or sessionStorage
- * 4. Start Angular dev server: npm start
+ *    (Proxy authenticates automatically using library card 1001600244772)
+ * 2. Start Angular dev server: npm start
+ * 3. All requests are automatically authenticated through the proxy!
  * 
- * The proxy server must be running with valid EBSCO authentication.
- * EBSCO authentication returns the credentials needed for Motor.com M1 API.
+ * No manual authentication needed - the proxy server handles everything!
  */
 @Injectable()
 export class ProxyAuthInterceptor implements HttpInterceptor {
   private readonly PROXY_URL = 'http://localhost:3001/api/motor-proxy';
-  private readonly AUTH_TOKEN_KEY = 'motor-auth-token';
   
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     // Skip if the request is already going to the proxy or to external resources
@@ -45,44 +42,14 @@ export class ProxyAuthInterceptor implements HttpInterceptor {
       targetUrl = req.url.substring(1);
     }
 
-    // Get auth token from storage
-    const authToken = sessionStorage.getItem(this.AUTH_TOKEN_KEY) || 
-                      localStorage.getItem(this.AUTH_TOKEN_KEY);
-
-    // Create the proxied request with auth token
-    const headers: any = {};
-    if (authToken) {
-      headers['X-Auth-Token'] = authToken;
-    }
-
+    // Create the proxied request (no auth token needed - handled by proxy server!)
     const proxiedReq = req.clone({
-      url: `${this.PROXY_URL}${targetUrl}`,
-      setHeaders: headers
+      url: `${this.PROXY_URL}${targetUrl}`
     });
 
     console.log(`[ProxyAuthInterceptor] Routing request through proxy: ${req.url} -> ${proxiedReq.url}`);
 
     return next.handle(proxiedReq);
-  }
-  
-  /**
-   * Store the authentication token
-   * Call this after successful EBSCO authentication
-   */
-  static setAuthToken(token: string, useSessionStorage = true): void {
-    if (useSessionStorage) {
-      sessionStorage.setItem('motor-auth-token', token);
-    } else {
-      localStorage.setItem('motor-auth-token', token);
-    }
-  }
-  
-  /**
-   * Clear the authentication token
-   */
-  static clearAuthToken(): void {
-    sessionStorage.removeItem('motor-auth-token');
-    localStorage.removeItem('motor-auth-token');
   }
 }
 
