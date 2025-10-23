@@ -45,6 +45,15 @@ fi
 
 # Start proxy server
 echo -e "${BLUE}📡 Starting proxy server on http://localhost:3001${NC}"
+
+# Check for EBSCO_PASSWORD environment variable
+if [ -z "$EBSCO_PASSWORD" ]; then
+  echo -e "${YELLOW}⚠️  EBSCO_PASSWORD not set - proxy will require manual configuration${NC}"
+  echo "   To enable automatic authentication, set EBSCO_PASSWORD:"
+  echo "   EBSCO_PASSWORD=\"your_password\" ./start-dev.sh"
+  echo ""
+fi
+
 cd "$PROXY_DIR"
 
 # Check if node_modules exists
@@ -53,7 +62,8 @@ if [ ! -d "node_modules" ]; then
   npm install
 fi
 
-npm start > /tmp/proxy-server.log 2>&1 &
+# Pass environment variables to proxy server
+EBSCO_PASSWORD="$EBSCO_PASSWORD" npm start > /tmp/proxy-server.log 2>&1 &
 PROXY_PID=$!
 
 # Wait for proxy server to start
@@ -92,23 +102,26 @@ echo -e "${GREEN}🎉 Development environment is ready!${NC}"
 echo ""
 echo "📝 Next steps:"
 echo ""
-echo "1. Authenticate with EBSCO (in a new terminal):"
-echo "   curl -X POST http://localhost:3001/api/auth/ebsco \\"
-echo "     -H 'Content-Type: application/json' \\"
-echo "     -d '{\"cardNumber\":\"YOUR_CARD\",\"password\":\"YOUR_PASSWORD\"}'"
+echo "1. Open browser to: http://localhost:4200"
 echo ""
-echo "2. Open browser to: http://localhost:4200"
-echo ""
-echo "3. In browser console, store the auth token:"
-echo "   sessionStorage.setItem('motor-auth-token', 'YOUR_TOKEN_HERE');"
+echo "2. Start using the app!"
+echo "   ✅ Authentication is handled automatically by the proxy"
+echo "   ✅ No need to manually authenticate or set tokens"
 echo ""
 echo "📊 Server Status:"
 echo "   Proxy Server:  http://localhost:3001 (PID: $PROXY_PID)"
 echo "   Angular App:   http://localhost:4200 (PID: $ANGULAR_PID)"
 echo ""
+echo "🔐 Authentication:"
+echo "   Library Card:  1001600244772"
+echo "   Mode:          Automatic (server-side)"
+echo ""
 echo "📋 Logs:"
-echo "   Proxy:  tail -f /tmp/proxy-server.log"
+echo "   Proxy:   tail -f /tmp/proxy-server.log"
 echo "   Angular: tail -f /tmp/angular-dev.log"
+echo ""
+echo "💡 Note: If authentication fails, check proxy logs or set EBSCO_PASSWORD:"
+echo "   EBSCO_PASSWORD=\"your_password\" ./start-dev.sh"
 echo ""
 echo "🛑 Press CTRL+C to stop both servers"
 echo "================================================"
