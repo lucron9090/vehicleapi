@@ -12,7 +12,14 @@ npm start
 ```
 
 ### 2. Configure Authentication
-Edit `proxy-server/index.js` or set environment variables:
+Create a `.env` file in the proxy-server directory (recommended):
+```bash
+cd proxy-server
+cp .env.example .env
+# Edit .env file with your credentials
+```
+
+Or set environment variables (not recommended - may expose in shell history):
 ```bash
 export EBSCO_CARD_NUMBER="your-card-number"
 export EBSCO_PASSWORD="your-password"

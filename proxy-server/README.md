@@ -86,14 +86,23 @@ Proxy requests to Motor.com M1 API using server-side EBSCO authentication.
 - None! Authentication is handled server-side automatically.
 
 **Configuration:**
-Set environment variables or update `index.js`:
+Set environment variables (recommended - use `.env` file):
+```bash
+# Create .env file in proxy-server directory
+EBSCO_CARD_NUMBER=your-card-number-here
+EBSCO_PASSWORD=your-password-here
+```
+
+Or update `index.js` directly (not recommended for production):
 ```javascript
 const AUTO_AUTH_CONFIG = {
   enabled: true,
-  cardNumber: process.env.EBSCO_CARD_NUMBER || '1001600244772',
+  cardNumber: process.env.EBSCO_CARD_NUMBER || 'YOUR_CARD_NUMBER',
   password: process.env.EBSCO_PASSWORD || '', // SET THIS!
 };
 ```
+
+⚠️ **Security Note**: Never commit credentials to version control. Always use environment variables or `.env` files (which are gitignored).
 
 **Examples:**
 ```bash

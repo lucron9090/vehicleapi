@@ -12,8 +12,10 @@ All API requests require authentication via EBSCO credentials. The proxy server 
 
 ### Authentication Headers (when calling Motor.com directly)
 ```
-Cookie: <ebsco-auth-token>
+Cookie: ebsco-auth=abc123...; session-id=xyz789...
 ```
+
+Note: The authentication cookie is a session cookie obtained through EBSCO authentication. The proxy server handles this automatically.
 
 ## API Endpoints
 
