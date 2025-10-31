@@ -43,18 +43,39 @@ This application includes an **integrated proxy server** that handles authentica
 📋 **API Documentation**: See [API_SCHEMA.md](./API_SCHEMA.md) for complete API reference.
 ⚡ **Quick Reference**: See [API_QUICK_REFERENCE.md](./API_QUICK_REFERENCE.md) for common endpoints.
 
-## ☁️ Cloud Deployment (Vercel)
+## ☁️ Cloud Deployment
 
-Both the proxy server and Angular app can be deployed to Vercel for free!
+### Firebase Hosting (Recommended)
 
-**Deploy Proxy Server**:
+Deploy the Angular app to Firebase and proxy server to Vercel:
+
+1. **Deploy Proxy Server** (Required First):
+   ```bash
+   cd proxy-server
+   npm install -g vercel
+   vercel --prod
+   ```
+
+2. **Update Environment**: Edit `src/environments/environment.prod.ts` with your proxy URL
+
+3. **Deploy to Firebase**:
+   ```bash
+   npm install -g firebase-tools
+   firebase login
+   npm run deploy
+   ```
+
+🔥 **Complete Guide**: See [FIREBASE_DEPLOYMENT.md](./FIREBASE_DEPLOYMENT.md)
+
+### Vercel (Alternative)
+
+Both proxy server and Angular app can be deployed to Vercel:
+
 ```bash
 cd proxy-server
 vercel --prod
-```
 
-**Deploy Angular App**:
-```bash
+# Then deploy Angular app
 npm run build:prod
 vercel --prod
 ```
