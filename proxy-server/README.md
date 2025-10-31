@@ -4,10 +4,12 @@ Express.js proxy server that handles authentication and proxying for EBSCO and M
 
 ## Features
 
-- **EBSCO Authentication**: Authenticates with EBSCO using card number and password
+- **Automatic Authentication**: Server-side authentication with EBSCO (no client auth needed!)
 - **EBSCO Proxy**: Proxies requests to EBSCO resources with authentication
-- **Motor.com M1 API Proxy**: Proxies requests to Motor.com M1 API using EBSCO credentials
+- **Motor.com M1 API Proxy**: Proxies ALL Motor.com M1 API requests including assets
+- **Asset Proxying**: Automatically handles `/api/assets/*` endpoints for images, PDFs, etc.
 - **CORS Enabled**: Allows cross-origin requests from Angular frontend
+- **Session Management**: Maintains authentication session server-side (25-minute sessions)
 
 ## Installation
 
@@ -74,19 +76,44 @@ curl http://localhost:3001/api/ebsco-proxy/search.ebsco.com/api/search \
   -H "X-Auth-Token: your-auth-token"
 ```
 
-### 3. Motor.com M1 API Proxy
+### 3. Motor.com M1 API Proxy (Automatic Authentication)
 
-Proxy requests to Motor.com M1 API using EBSCO credentials.
+Proxy requests to Motor.com M1 API using server-side EBSCO authentication.
 
 **Endpoint:** `* /api/motor-proxy/*`
 
 **Headers Required:**
-- `X-Auth-Token`: The auth token from EBSCO authentication
+- None! Authentication is handled server-side automatically.
 
-**Example:**
+**Configuration:**
+Set environment variables or update `index.js`:
+```javascript
+const AUTO_AUTH_CONFIG = {
+  enabled: true,
+  cardNumber: process.env.EBSCO_CARD_NUMBER || '1001600244772',
+  password: process.env.EBSCO_PASSWORD || '', // SET THIS!
+};
+```
+
+**Examples:**
 ```bash
-curl http://localhost:3001/api/motor-proxy/api/years \
-  -H "X-Auth-Token: your-auth-token"
+# Get available years (no auth token needed!)
+curl http://localhost:3001/api/motor-proxy/api/years
+
+# Get makes for a year
+curl http://localhost:3001/api/motor-proxy/api/year/2023/makes
+
+# Get models
+curl http://localhost:3001/api/motor-proxy/api/year/2023/make/Toyota/models
+
+# Search articles
+curl http://localhost:3001/api/motor-proxy/api/source/motor/vehicle/12345/articles/v2
+
+# Get article content
+curl http://localhost:3001/api/motor-proxy/api/source/motor/vehicle/12345/article/article-123
+
+# Get asset (image, PDF, etc.) - IMPORTANT for proper rendering!
+curl http://localhost:3001/api/motor-proxy/api/assets/unique-asset-id-here
 ```
 
 **Available Motor.com endpoints:**
@@ -94,7 +121,11 @@ curl http://localhost:3001/api/motor-proxy/api/years \
 - `GET /api/year/{year}/makes` - Get makes for a year
 - `GET /api/year/{year}/make/{make}/models` - Get models
 - `GET /api/source/{source}/vehicle/{id}/articles/v2` - Search articles
-- And more...
+- `GET /api/source/{source}/vehicle/{id}/article/{articleId}` - Get article content
+- `GET /api/assets/{assetId}` - **Get assets (images, PDFs, documents)**
+- `GET /api/source/{source}/vehicle/{id}/labor/{laborId}` - Get labor details
+- `GET /api/source/{source}/vehicle/{id}/maintenance-schedules/*` - Maintenance schedules
+- And many more... (see [../API_SCHEMA.md](../API_SCHEMA.md) for complete list)
 
 ### 4. Health Check
 
@@ -111,7 +142,20 @@ Check if the server is running.
 
 ## How It Works
 
-### Authentication Flow
+### Automatic Authentication Flow (Recommended)
+
+1. **Server Startup** - Proxy server authenticates automatically with EBSCO on startup
+2. **Session Management** - Server maintains a 25-minute authentication session
+3. **Auto-Renewal** - Session is automatically renewed when it expires
+4. **Client Requests** - Angular app makes requests without any auth headers
+5. **Server Proxying** - Proxy server adds authentication cookies automatically
+6. **Response** - Authenticated response is returned to the client
+
+**No client-side authentication needed!** Just start the proxy server and make requests.
+
+### Manual Authentication Flow (Optional)
+
+If you disable automatic authentication, you can authenticate manually:
 
 1. **Client** sends card number and password to `/api/auth/ebsco`
 2. **Proxy Server** performs multi-step authentication with EBSCO:
@@ -125,11 +169,25 @@ Check if the server is running.
 
 ### Proxying Flow
 
-1. **Client** makes request to proxy endpoint with `X-Auth-Token` header
-2. **Proxy Server** extracts the target URL from the request path
-3. **Proxy Server** forwards the request with auth token as cookies
-4. **Target API** (EBSCO or Motor.com) processes the authenticated request
-5. **Proxy Server** returns the response to the client
+1. **Client** makes request to proxy endpoint (e.g., `/api/motor-proxy/api/years`)
+2. **Proxy Server** checks if session is valid (or authenticates automatically if needed)
+3. **Proxy Server** extracts the target URL from the request path
+4. **Proxy Server** forwards the request with server-side auth token as cookies
+5. **Target API** (EBSCO or Motor.com) processes the authenticated request
+6. **Proxy Server** returns the response to the client
+
+### Asset Proxying (Critical for Proper Rendering)
+
+Articles from Motor.com often contain references to assets like:
+- Images: `/api/assets/image-uuid-here.jpg`
+- PDFs: `/api/assets/document-uuid-here.pdf`
+- SVG diagrams: `/api/assets/diagram-uuid-here.svg`
+
+These asset URLs are automatically proxied:
+1. **Angular App** loads article with asset reference `/api/assets/{id}`
+2. **ProxyAuthInterceptor** rewrites to `http://localhost:3001/api/motor-proxy/api/assets/{id}`
+3. **Proxy Server** forwards to `https://sites.motor.com/m1/api/assets/{id}` with auth
+4. **Asset** is returned with proper authentication and CORS headers
 
 ## Integration with Angular Frontend
 
