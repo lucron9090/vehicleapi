@@ -11,38 +11,37 @@ This Angular application was extracted from production sourcemaps and reconstruc
 
 ## 🔐 Integrated Proxy Server
 
-This application includes an **integrated proxy server** that handles authentication and API proxying.
+This application includes an **integrated proxy server** that handles authentication and API proxying **automatically**.
 
-### Quick Setup
+### Quick Setup (Automatic Authentication)
 
-1. **Start the proxy server** (Terminal 1):
+1. **Configure credentials** (one-time setup):
    ```bash
    cd proxy-server
-   npm start
+   cp .env.example .env
+   # Edit .env and add your EBSCO password
    ```
 
-2. **Authenticate with EBSCO**:
+2. **Start the proxy server** (Terminal 1):
    ```bash
-   curl -X POST http://localhost:3001/api/auth/ebsco \
-     -H "Content-Type: application/json" \
-     -d '{"cardNumber":"YOUR_CARD","password":"YOUR_PASSWORD"}'
+   cd proxy-server
+   npm install
+   npm start
    ```
    
-   Save the returned `authToken`.
+   The proxy will automatically authenticate with EBSCO on startup! ✅
 
 3. **Start the Angular app** (Terminal 2):
    ```bash
+   npm install --legacy-peer-deps
    npm start
    ```
 
-4. **Store auth token** in browser console:
-   ```javascript
-   sessionStorage.setItem('motor-auth-token', 'YOUR_TOKEN_HERE');
-   ```
-
-5. **Use the app** - All API requests are automatically proxied with authentication!
+4. **Use the app** - All API requests (including assets) are automatically proxied with authentication!
 
 📖 **Detailed Instructions**: See [PROXY_INTEGRATION.md](./PROXY_INTEGRATION.md) for complete setup guide.
+📋 **API Documentation**: See [API_SCHEMA.md](./API_SCHEMA.md) for complete API reference.
+⚡ **Quick Reference**: See [API_QUICK_REFERENCE.md](./API_QUICK_REFERENCE.md) for common endpoints.
 
 ## ☁️ Cloud Deployment (Vercel)
 
@@ -333,12 +332,34 @@ Unknown - This code was extracted from a production application.
 
 ## 🔗 Related Documentation
 
+### API & Integration
+- **[API_SCHEMA.md](./API_SCHEMA.md)** - Complete API endpoint reference with request/response schemas
+- **[API_QUICK_REFERENCE.md](./API_QUICK_REFERENCE.md)** - Quick reference for common API endpoints
 - **[PROXY_INTEGRATION.md](./PROXY_INTEGRATION.md)** - Complete proxy server integration guide
 - **[Proxy Server README](./proxy-server/README.md)** - Proxy server API documentation
+
+### Project Documentation
 - **[SETUP.md](./SETUP.md)** - Original setup notes
 - **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)** - Project organization guide
 
 ---
 
+## 🖼️ Asset Handling
+
+Articles from Motor.com often reference images, PDFs, and other assets using URLs like `/api/assets/{unique-id}`. 
+
+**How it works:**
+1. Article HTML contains: `<img src="/api/assets/abc-123-def" />`
+2. Angular's `ProxyAuthInterceptor` automatically rewrites to: `http://localhost:3001/api/motor-proxy/api/assets/abc-123-def`
+3. Proxy server forwards to Motor.com with authentication: `https://sites.motor.com/m1/api/assets/abc-123-def`
+4. Asset is returned with proper authentication and CORS headers
+
+**No special configuration needed** - assets are automatically proxied! 🎉
+
+See [API_SCHEMA.md](./API_SCHEMA.md) for complete details on the `/api/assets/{assetId}` endpoint.
+
+---
+
 **Generated from sourcemaps on October 20, 2025**  
-**Proxy integration added on October 23, 2025**
+**Proxy integration added on October 23, 2025**  
+**API schema and asset proxying documented on October 31, 2025**
