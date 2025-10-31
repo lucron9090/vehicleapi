@@ -355,15 +355,22 @@ export class AssetsFacade {
             return `<a ${navigationAttributes}>${innerHtml}</a>`;
           })
           .replace(/<mtr-image-link id='(.*?)'([^>]*)>([^<]*)<\/mtr-image-link>/g, ($0, id: string, extraAttributes: string, text: string) => {
-            return `<span class='image-hover'>${text}<img src='api/source/${params.contentSource}/graphic/${id}'${extraAttributes} loading='lazy'></span>`;
+            return `<span class='image-hover'>${text}<img src='http://localhost:3001/api/motor-proxy/api/source/${params.contentSource}/graphic/${id}'${extraAttributes} loading='lazy'></span>`;
           })
           .replace(/<mtr-image id='(.*?)'([^>]*)><\/mtr-image>/g, ($0, id: string, extraAttributes: string) => {
-            return `<img src='api/source/${params.contentSource}/graphic/${id}'${extraAttributes}>`;
+            return `<img src='http://localhost:3001/api/motor-proxy/api/source/${params.contentSource}/graphic/${id}'${extraAttributes}>`;
           })
           .replace(/<mtr-area id=['"](.*?)['"]([^>]*)>([^<]*)<\/mtr-area>/g, ($0, id: string, extraAttributes: string, innerHtml: string) => {
             const navigationAttributes = this.calculateNavigationAttributesForId(id, idsToCurrentArticle, currentQueryParams);
             return `<area ${navigationAttributes}${extraAttributes}>${innerHtml}</area>`;
-          });
+          })
+          // Rewrite any remaining /api/ URLs to use the proxy server
+          // This handles img src, embed src, and other asset references
+          .replace(/(<img[^>]+src=["'])\/api\//gi, '$1http://localhost:3001/api/motor-proxy/api/')
+          .replace(/(<embed[^>]+src=["'])\/api\//gi, '$1http://localhost:3001/api/motor-proxy/api/')
+          .replace(/(<iframe[^>]+src=["'])\/api\//gi, '$1http://localhost:3001/api/motor-proxy/api/')
+          .replace(/(<source[^>]+src=["'])\/api\//gi, '$1http://localhost:3001/api/motor-proxy/api/')
+          .replace(/(<object[^>]+data=["'])\/api\//gi, '$1http://localhost:3001/api/motor-proxy/api/');
 
         return {
           html,
