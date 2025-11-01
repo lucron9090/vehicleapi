@@ -1,30 +1,36 @@
 import { Injectable } from '@angular/core';
 import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '~/environment';
 
 /**
  * HTTP Interceptor that routes API requests through the proxy server
  * 
  * This interceptor:
  * 1. Intercepts all HTTP requests to the Motor.com M1 API
- * 2. Rewrites the URL to go through the local proxy server (http://localhost:3001)
+ * 2. Rewrites the URL to go through the proxy server (configured in environment)
  * 3. The proxy server handles authentication automatically server-side
  * 
  * Usage:
+ * Development:
  * 1. Start the proxy server: cd proxy-server && npm start
- *    (Proxy authenticates automatically using library card 1001600244772)
  * 2. Start Angular dev server: npm start
  * 3. All requests are automatically authenticated through the proxy!
+ * 
+ * Production:
+ * 1. Deploy proxy server to Vercel/Heroku/etc.
+ * 2. Update environment.prod.ts with deployed proxy URL
+ * 3. Deploy Angular app to Firebase/Vercel/etc.
  * 
  * No manual authentication needed - the proxy server handles everything!
  */
 @Injectable()
 export class ProxyAuthInterceptor implements HttpInterceptor {
-  private readonly PROXY_URL = 'http://localhost:3001/api/motor-proxy';
+  private readonly PROXY_URL = environment.proxyUrl;
   
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     // Skip if the request is already going to the proxy or to external resources
-    if (req.url.startsWith('http://localhost:3001') || 
+    if (req.url.startsWith(this.PROXY_URL) || 
         req.url.startsWith('assets/') ||
         req.url.includes('ebsco') ||
         req.url.includes('external')) {

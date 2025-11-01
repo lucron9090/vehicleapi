@@ -8,7 +8,9 @@
     "build": "NODE_OPTIONS=--openssl-legacy-provider ng build",
     "build:prod": "NODE_OPTIONS=--openssl-legacy-provider ng build --configuration production",
     "watch": "NODE_OPTIONS=--openssl-legacy-provider ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "deploy": "npm run build:prod && firebase deploy",
+    "deploy:preview": "npm run build:prod && firebase hosting:channel:deploy preview"
   },
   "private": true,
   "dependencies": {
