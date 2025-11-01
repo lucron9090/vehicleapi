@@ -291,12 +291,13 @@ Get raw XML content of an article (for debugging).
 ---
 
 #### 3.4 Get Article Title
-Get article title without full content.
+Get article title without full content. For GM publication objects, the article ID must include the publication_object_syskey to uniquely identify the title.
 
-**Endpoint**: `GET /api/source/{contentSource}/article/{articleId}/title`
+**Endpoint**: `GET /api/source/{contentSource}/vehicle/{vehicleId}/article/{articleId}/title`
 
 **Parameters**:
 - `contentSource` (path, required): Content source
+- `vehicleId` (path, required): Vehicle ID
 - `articleId` (path, required): Article ID
 
 **Response**: `StringResponse`
@@ -352,17 +353,51 @@ Get indicators for maintenance schedules.
 
 ---
 
-#### 3.8 Get Asset (Images, Documents)
-Get asset files like images, PDFs, or other documents referenced in articles.
+#### 3.8 Get Graphic/Image
+Get image/diagram for the provided ID.
 
-**Endpoint**: `GET /api/assets/{assetId}`
+**Endpoint**: `GET /api/source/{contentSource}/graphic/{id}`
 
 **Parameters**:
-- `assetId` (path, required): Unique asset identifier
+- `contentSource` (path, required): Content source
+- `id` (path, required): Graphic/image ID
+- `w` (query, optional): Width for resizing
+- `h` (query, optional): Height for resizing
 
-**Response**: Binary content (image, PDF, etc.) with appropriate Content-Type header
+**Response**: Binary image content
 
-**Note**: This endpoint returns the actual asset file. Common asset types include:
+**Note**: Returns a 404 with a static SVG declaring that the image is not available if the image cannot be found.
+
+---
+
+#### 3.9 Get Graphic by Manufacturer (Deprecated)
+Prior route for retrieving images. Do not remove, this route is referenced in saved bookmarks.
+
+**Endpoint**: `GET /api/manufacturer/{manufacturerId}/graphic/{id}`
+
+**Parameters**:
+- `manufacturerId` (path, required): Manufacturer ID
+- `id` (path, required): Graphic/image ID
+- `w` (query, optional): Width for resizing
+- `h` (query, optional): Height for resizing
+
+**Response**: Binary image content
+
+**Status**: ⚠️ Deprecated - Use `/api/source/{contentSource}/graphic/{id}` instead
+
+---
+
+#### 3.10 Get Asset by Handle ID
+Returns an asset for the provided handle ID.
+
+**Endpoint**: `GET /api/asset/{handleId}`
+
+**Parameters**:
+- `handleId` (path, required): Asset handle identifier
+
+**Response**: Binary asset content (image, PDF, etc.) with appropriate Content-Type header
+
+**Note**: This is a different endpoint from `/api/assets/{assetId}`. Common asset types include:
 - Images: `.jpg`, `.png`, `.gif`, `.svg`
 - Documents: `.pdf`
 - Other media files
@@ -531,31 +566,43 @@ Log a client-side error for debugging.
 
 ### 8. Track Change API
 
-#### 8.1 Get Track Changes
-Get change tracking information.
+#### 8.1 Get Processing Quarters
+Get available processing quarters for track changes.
 
-**Endpoint**: `GET /api/source/{contentSource}/vehicle/{vehicleId}/trackchange`
+**Endpoint**: `GET /api/source/track-change/processingquarters`
 
-**Parameters**:
-- `contentSource` (path, required): Content source
-- `vehicleId` (path, required): Vehicle ID
+**Parameters**: None
 
-**Response**: Track change data
+**Response**: `StringListResponse`
+```json
+{
+  "data": ["2024Q1", "2024Q2", "2024Q3", ...]
+}
+```
 
 ---
 
-#### 8.2 Save Track Change
-Save change tracking information.
+#### 8.2 Get Vehicle Delta Report
+Get delta report showing vehicle changes for a specific quarter.
 
-**Endpoint**: `POST /api/source/{contentSource}/vehicle/{vehicleId}/trackchange`
+**Endpoint**: `GET /api/source/track-change/deltareport`
 
 **Parameters**:
-- `contentSource` (path, required): Content source
-- `vehicleId` (path, required): Vehicle ID
+- `quarter` (query, optional): Processing quarter (e.g., "2024Q1")
 
-**Request Body**: Track change data
-
-**Response**: Success
+**Response**: `VehicleDeltaReportListResponse`
+```json
+{
+  "data": [
+    {
+      "vehicleId": "12345",
+      "changes": [...],
+      ...
+    },
+    ...
+  ]
+}
+```
 
 ---
 
@@ -564,9 +611,13 @@ Save change tracking information.
 #### 9.1 Logout
 End the current session.
 
-**Endpoint**: `POST /api/logout`
+**Endpoint**: `GET /logout`
+
+**Parameters**: None
 
 **Response**: Success (no body)
+
+**Note**: This is a GET request, not POST
 
 ---
 
