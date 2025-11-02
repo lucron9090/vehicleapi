@@ -5,6 +5,7 @@ import { setLoading } from '@datorama/akita';
 import { RouterQuery } from '@datorama/akita-ng-router-store';
 import { combineLatest, Observable, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap, take, tap } from 'rxjs/operators';
+import { environment } from '~/environment';
 import { ContentSource, PartLineItem } from '~/generated/api/models';
 import { AssetApi, BookmarkApi, PartsApi, VehicleApi } from '~/generated/api/services';
 import { SearchResultsFacade } from '~/search/state/search-results.facade';
@@ -17,6 +18,7 @@ import { AssetsState, LaborStore, LeafAssetsStore, RootAssetsStore, VehicleParts
 
 @Injectable({ providedIn: 'root' })
 export class AssetsFacade {
+  private readonly PROXY_URL = environment.proxyUrl;
   constructor(
     private rootAssetsStore: RootAssetsStore,
     private rootAssetsQuery: RootAssetsQuery,
@@ -355,15 +357,22 @@ export class AssetsFacade {
             return `<a ${navigationAttributes}>${innerHtml}</a>`;
           })
           .replace(/<mtr-image-link id='(.*?)'([^>]*)>([^<]*)<\/mtr-image-link>/g, ($0, id: string, extraAttributes: string, text: string) => {
-            return `<span class='image-hover'>${text}<img src='api/source/${params.contentSource}/graphic/${id}'${extraAttributes} loading='lazy'></span>`;
+            return `<span class='image-hover'>${text}<img src='${this.PROXY_URL}/api/source/${params.contentSource}/graphic/${id}'${extraAttributes} loading='lazy'></span>`;
           })
           .replace(/<mtr-image id='(.*?)'([^>]*)><\/mtr-image>/g, ($0, id: string, extraAttributes: string) => {
-            return `<img src='api/source/${params.contentSource}/graphic/${id}'${extraAttributes}>`;
+            return `<img src='${this.PROXY_URL}/api/source/${params.contentSource}/graphic/${id}'${extraAttributes}>`;
           })
           .replace(/<mtr-area id=['"](.*?)['"]([^>]*)>([^<]*)<\/mtr-area>/g, ($0, id: string, extraAttributes: string, innerHtml: string) => {
             const navigationAttributes = this.calculateNavigationAttributesForId(id, idsToCurrentArticle, currentQueryParams);
             return `<area ${navigationAttributes}${extraAttributes}>${innerHtml}</area>`;
-          });
+          })
+          // Rewrite any remaining /api/ URLs to use the proxy server
+          // This handles img src, embed src, and other asset references
+          .replace(/(<img[^>]+src=["'])\/api\//gi, `$1${this.PROXY_URL}/api/`)
+          .replace(/(<embed[^>]+src=["'])\/api\//gi, `$1${this.PROXY_URL}/api/`)
+          .replace(/(<iframe[^>]+src=["'])\/api\//gi, `$1${this.PROXY_URL}/api/`)
+          .replace(/(<source[^>]+src=["'])\/api\//gi, `$1${this.PROXY_URL}/api/`)
+          .replace(/(<object[^>]+data=["'])\/api\//gi, `$1${this.PROXY_URL}/api/`);
 
         return {
           html,
